@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuddles - Offline</title>
+    <link rel="icon" href="/static/icons/favicon.ico">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .offline-container {
+            max-width: 400px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .offline-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        h2 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            font-weight: 400;
+            opacity: 0.9;
+        }
+        
+        p {
+            line-height: 1.6;
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+        
+        .retry-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .retry-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        .features {
+            margin-top: 30px;
+            text-align: left;
+        }
+        
+        .feature {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .feature-icon {
+            font-size: 1.2rem;
+            margin-right: 10px;
+            width: 20px;
+        }
+        
+        .network-status {
+            margin-top: 20px;
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+        
+        .online {
+            color: #4ade80;
+        }
+        
+        .offline {
+            color: #f87171;
+        }
+        
+        @media (max-width: 480px) {
+            .offline-container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .offline-icon {
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">🤗</div>
+        <h1>Cuddles</h1>
+        <h2>You're offline</h2>
+        <p>
+            Don't worry! While you're offline, you can still view your previously loaded data. 
+            Once you're back online, everything will sync automatically.
+        </p>
+        
+        <button class="retry-button" onclick="window.location.reload()">
+            Try Again
+        </button>
+        
+        <div class="features">
+            <div class="feature">
+                <span class="feature-icon">📱</span>
+                <span>Installed as app for offline use</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">🔄</span>
+                <span>Auto-sync when connection returns</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">💾</span>
+                <span>Your data is safely stored locally</span>
+            </div>
+        </div>
+        
+        <div class="network-status">
+            <span id="status-indicator">⚡</span>
+            <span id="status-text">Checking connection...</span>
+        </div>
+    </div>
+
+    <script>
+        // Check network status
+        function updateNetworkStatus() {
+            const indicator = document.getElementById('status-indicator');
+            const text = document.getElementById('status-text');
+            
+            if (navigator.onLine) {
+                indicator.textContent = '✅';
+                text.textContent = 'Connection restored';
+                text.className = 'online';
+                
+                // Auto-redirect after a moment
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+            } else {
+                indicator.textContent = '📡';
+                text.textContent = 'No internet connection';
+                text.className = 'offline';
+            }
+        }
+        
+        // Initial check
+        updateNetworkStatus();
+        
+        // Listen for network changes
+        window.addEventListener('online', updateNetworkStatus);
+        window.addEventListener('offline', updateNetworkStatus);
+        
+        // Auto-check every 5 seconds
+        setInterval(updateNetworkStatus, 5000);
+        
+        // Service worker message handling
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', (event) => {
+                if (event.data && event.data.type === 'NETWORK_RESTORED') {
+                    updateNetworkStatus();
+                }
+            });
+        }
+        
+        // Background sync registration (if supported)
+        if ('serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype) {
+            navigator.serviceWorker.ready.then((registration) => {
+                return registration.sync.register('background-sync');
+            }).catch(() => {
+                // Background sync not supported
+            });
+        }
+    </script>
+</body>
+</html>

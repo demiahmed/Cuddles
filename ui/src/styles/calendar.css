@@ -1,0 +1,38 @@
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.125rem;
+  margin: 0.125rem;
+}
+
+.calendar-grid > div:not(.day-cell) {
+  text-align: center;
+  font-weight: 500;
+  padding: 0.25rem 0;
+}
+
+.day-cell {
+  aspect-ratio: 1;
+  background: white;
+  transition: all 0.2s ease-in-out;
+  padding: 0.25rem !important;
+}
+
+.day-cell.today {
+  border-color: #db2777; /* pink-600 */
+  background-color: #fdf2f8; /* pink-50 */
+}
+
+.day-cell .icon-container {
+  display: flex;
+  gap: 0.125rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-height: 1.25rem;
+}
+
+.day-cell svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: #ec4899; /* pink-500 */
+}
