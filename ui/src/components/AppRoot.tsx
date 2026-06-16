@@ -204,6 +204,7 @@ export default function AppRoot() {
             <WellnessPanel
               key={wellnessCalendarDate ?? 'today'}
               initialDate={wellnessCalendarDate}
+              initialEntry={wellnessCalendarDate ? (wellnessLogs.find(w => w.date === wellnessCalendarDate) ?? null) : null}
               onWellnessSaved={() => {
                 const year = currentDisplayDate.getFullYear();
                 const month = currentDisplayDate.getMonth();

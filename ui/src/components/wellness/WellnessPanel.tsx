@@ -11,6 +11,7 @@ import CorrelationInsights from '@/components/wellness/CorrelationInsights';
 interface Props {
   onWellnessSaved?: () => void;
   initialDate?: string | null;
+  initialEntry?: WellnessEntry | null;
   onBack?: () => void;
 }
 
@@ -24,7 +25,7 @@ function formatDisplayDate(dateStr: string) {
   });
 }
 
-export default function WellnessPanel({ onWellnessSaved, initialDate, onBack }: Props) {
+export default function WellnessPanel({ onWellnessSaved, initialDate, initialEntry, onBack }: Props) {
   const [stats, setStats] = useState<WellnessStats | null>(null);
   const [todayEntry, setTodayEntry] = useState<WellnessEntry | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,7 +53,7 @@ export default function WellnessPanel({ onWellnessSaved, initialDate, onBack }: 
     }
   }, [initialDate]);
 
-  const entryForFormDate = stats?.entries.find(e => e.date === formDate) ?? null;
+  const entryForFormDate = stats?.entries.find(e => e.date === formDate) ?? initialEntry ?? null;
   const isCalendarMode = !!initialDate;
 
   function handleSaved(entry: WellnessEntry) {
@@ -247,7 +248,7 @@ export default function WellnessPanel({ onWellnessSaved, initialDate, onBack }: 
       {showForm && (
         <WellnessForm
           date={formDate}
-          existing={formDate === today ? todayEntry : entryForFormDate}
+          existing={formDate === today ? (todayEntry ?? initialEntry ?? null) : entryForFormDate}
           onClose={() => {
             setShowForm(false);
             if (isCalendarMode) onBack?.();
