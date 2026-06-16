@@ -5,13 +5,14 @@ import {
   WellnessEntry, MoodScore, FoodQuality,
   MOOD_LABELS, MOOD_EMOJI, PAIN_LOCATIONS, WORKOUT_TYPES,
 } from '@/types/wellness';
-import { saveWellnessEntry } from '@/utils/wellness';
+import { saveWellnessEntry, deleteWellnessEntry } from '@/utils/wellness';
 
 interface Props {
   date: string;
   existing?: WellnessEntry | null;
   onClose: () => void;
   onSaved: (entry: WellnessEntry) => void;
+  onDeleted?: () => void;
 }
 
 const SCALE5 = [1, 2, 3, 4, 5] as const;
@@ -65,7 +66,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function WellnessForm({ date, existing, onClose, onSaved }: Props) {
+export default function WellnessForm({ date, existing, onClose, onSaved, onDeleted }: Props) {
   const [mood, setMood] = useState<MoodScore | null>(existing?.mood_score ?? null);
   const [energy, setEnergy] = useState<number | null>(existing?.energy_level ?? null);
   const [stress, setStress] = useState<number | null>(existing?.stress_level ?? null);
@@ -82,6 +83,7 @@ export default function WellnessForm({ date, existing, onClose, onSaved }: Props
   const [painNotes, setPainNotes] = useState(existing?.pain_notes ?? '');
   const [notes, setNotes] = useState(existing?.notes ?? '');
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -114,6 +116,14 @@ export default function WellnessForm({ date, existing, onClose, onSaved }: Props
     });
     setSaving(false);
     if (result) onSaved(result);
+  }
+
+  async function handleDelete() {
+    if (!confirm('Delete this wellness log? This cannot be undone.')) return;
+    setDeleting(true);
+    const ok = await deleteWellnessEntry(date);
+    setDeleting(false);
+    if (ok) onDeleted?.();
   }
 
   return (
@@ -354,22 +364,34 @@ export default function WellnessForm({ date, existing, onClose, onSaved }: Props
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-4 border-t border-gray-100 flex gap-3 shrink-0">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className="flex-2 py-2.5 px-6 rounded-xl bg-pink-500 text-white text-sm font-bold hover:bg-pink-600 disabled:opacity-60 transition-colors"
-          >
-            {saving ? 'Saving…' : 'Save Log'}
-          </button>
+        <div className="px-5 py-4 border-t border-gray-100 shrink-0 space-y-2">
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className="flex-2 py-2.5 px-6 rounded-xl bg-pink-500 text-white text-sm font-bold hover:bg-pink-600 disabled:opacity-60 transition-colors"
+            >
+              {saving ? 'Saving…' : 'Save Log'}
+            </button>
+          </div>
+          {existing && (
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={deleting}
+              className="w-full py-2 rounded-xl text-sm font-medium text-red-400 hover:text-red-600 hover:bg-red-50 disabled:opacity-50 transition-colors"
+            >
+              {deleting ? 'Deleting…' : '🗑 Delete this log'}
+            </button>
+          )}
         </div>
       </div>
     </div>

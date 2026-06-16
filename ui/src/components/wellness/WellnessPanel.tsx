@@ -253,6 +253,13 @@ export default function WellnessPanel({ onWellnessSaved, initialDate, onBack }: 
             if (isCalendarMode) onBack?.();
           }}
           onSaved={handleSaved}
+          onDeleted={() => {
+            setShowForm(false);
+            if (formDate === today) setTodayEntry(null);
+            reload();
+            onWellnessSaved?.();
+            if (isCalendarMode) onBack?.();
+          }}
         />
       )}
     </div>
