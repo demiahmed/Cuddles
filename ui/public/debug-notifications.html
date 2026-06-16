@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuddles - Push Notification Debug</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            margin: 0; 
+            padding: 15px; 
+            background: #1a1a1a; 
+            color: #fff; 
+            line-height: 1.5;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { font-size: 1.8rem; margin: 0 0 20px 0; text-align: center; }
+        h3 { font-size: 1.2rem; margin: 20px 0 10px 0; border-bottom: 2px solid #333; padding-bottom: 5px; }
+        
+        /* Mobile-first responsive buttons */
+        button { 
+            padding: 12px 16px; 
+            margin: 5px 2px; 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 14px;
+            min-width: 120px;
+            touch-action: manipulation;
+        }
+        button:hover { background: #0056b3; }
+        button.danger { background: #dc3545; }
+        button.danger:hover { background: #c82333; }
+        button:active { transform: scale(0.98); }
+        
+        /* Form controls */
+        select, input { 
+            padding: 12px; 
+            background: #333; 
+            color: white; 
+            border: 1px solid #555; 
+            border-radius: 8px; 
+            font-size: 14px;
+            min-width: 200px;
+        }
+        select:focus, input:focus { outline: none; border-color: #007bff; }
+        
+        /* Grid layouts */
+        .button-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 10px; 
+            margin: 15px 0; 
+        }
+        .control-row { 
+            display: flex; 
+            gap: 10px; 
+            align-items: center; 
+            flex-wrap: wrap; 
+            margin: 15px 0; 
+        }
+        
+        /* Status and info boxes */
+        .status { background: #444; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .log { 
+            background: #333; 
+            padding: 15px; 
+            border-radius: 8px; 
+            font-family: 'Consolas', 'Monaco', monospace; 
+            white-space: pre-wrap; 
+            max-height: 400px; 
+            overflow-y: auto; 
+            font-size: 13px;
+            margin-top: 20px;
+        }
+        .info-box {
+            background: #2a2a2a; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin: 15px 0; 
+            border-left: 4px solid #17a2b8;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+            word-break: break-all;
+        }
+        
+        /* Color classes */
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .warning { color: #ffc107; }
+        .info { color: #17a2b8; }
+        
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .container { padding: 0 10px; }
+            .control-row { flex-direction: column; align-items: stretch; }
+            .control-row > * { width: 100%; margin: 5px 0; }
+            .button-grid { grid-template-columns: 1fr; }
+            button { width: 100%; margin: 5px 0; }
+            select, input { width: 100%; }
+            h1 { font-size: 1.5rem; }
+            .log { font-size: 12px; max-height: 300px; }
+        }
+        
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            h1 { font-size: 1.3rem; }
+            button { padding: 14px 12px; font-size: 16px; } /* Larger touch targets */
+            select, input { padding: 14px 12px; font-size: 16px; }
+        }
+        
+        /* Targeted testing section */
+        .targeted-section {
+            background: linear-gradient(135deg, #2d3748, #4a5568);
+            border: 2px solid #17a2b8;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        /* Stats display with proper text wrapping */
+        #statsDisplay {
+            background: #2a2a2a; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin: 15px 0; 
+            min-height: 50px;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+            word-break: break-all;
+            white-space: pre-wrap;
+        }
+        
+        .subscription-item {
+            margin: 8px 0;
+            padding: 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Cuddles Push Notification Debug</h1>
+        
+        <div class="status" id="status">Status: Ready</div>
+        
+        <div class="targeted-section">
+            <h3>🎯 Targeted Testing (Send to Specific Device)</h3>
+            <div class="control-row">
+                <select id="subscriptionDropdown">
+                    <option value="">Choose subscription...</option>
+                </select>
+                <button onclick="refreshSubscriptionList()" style="background: #6c757d;">🔄 Refresh List</button>
+                <button onclick="getSubscriptionStats()" style="background: #17a2b8;">📊 Load Subscriptions</button>
+            </div>
+            <div id="targetedTestStatus" class="info-box">
+                <em>Click "📊 Load Subscriptions" to see available devices for testing</em>
+            </div>
+        </div>
+
+        <div>
+            <h3>💕 Send Notifications</h3>
+            <p style="color: #aaa; margin: 10px 0;">Choose a notification type to send. Will use selected subscription above, or send to all if none selected.</p>
+            <div class="button-grid">
+                <button onclick="testNotification('ovulation')">🌸 Ovulation Alert</button>
+                <button onclick="testNotification('period')">📅 Period Reminder</button>
+                <button onclick="testNotification('wild_tips')">😈 Wild Sex Tips</button>
+                <button onclick="testNotification('health')">💪 Health Tips</button>
+                <button onclick="testNotification('encouragement')">⏰ Sex Encouragement</button>
+                <button onclick="testNotification('period_passion')">🌹 Period Passion</button>
+                <button onclick="testNotification('double_entry')">🔥 Double Entry</button>
+                <button onclick="testNotification('achievements')">🏆 Achievements</button>
+                <button onclick="testNotification('orgasm_facts')">💫 Fun Facts</button>
+                <button onclick="testNotification('connection')">💕 Connection</button>
+                <button onclick="testNotification('streaks')">🔥 Streak Alert</button>
+                <button onclick="testNotification('random')" style="background: #ffc107; color: black;">🎲 Random</button>
+            </div>
+        </div>
+
+        <div>
+            <h3>🔧 Setup & Debug</h3>
+            <div class="button-grid">
+                <button onclick="checkPlatform()">Check Platform</button>
+                <button onclick="checkServiceWorker()">Check Service Worker</button>
+                <button onclick="requestPermission()">Request Permission</button>
+                <button onclick="subscribe()">Subscribe to Push</button>
+                <button onclick="forceNewSubscription()">Force New Subscription</button>
+                <button onclick="clearAllSubscriptions()">Clear All Subscriptions</button>
+                <button onclick="clearSubscriptions()" class="danger">Clear Server Subscriptions</button>
+                <button onclick="clearLog()">Clear Log</button>
+            </div>
+        </div>
+
+        <div>
+            <h3>� Quick Test Options</h3>
+            <div class="button-grid">
+                <button onclick="testScenario('morning_routine')">🌅 Morning Routine</button>
+                <button onclick="testScenario('lunch_health')">🍽️ Lunch Health</button>
+                <button onclick="testScenario('evening_wild')">🌆 Evening Wild</button>
+                <button onclick="testScenario('bedtime_celebration')">🌙 Bedtime Celebration</button>
+                <button onclick="rapidTest()" style="background: #ffc107; color: black;">⚡ Rapid Test (5 random)</button>
+            </div>
+        </div>
+
+        <div>
+            <h3>📊 Server Stats</h3>
+            <button onclick="getSubscriptionStats()">📈 Get Subscription Stats</button>
+            <button onclick="getServerStatus()">🔍 Check Server Status</button>
+            <div id="statsDisplay" style="background: #2a2a2a; padding: 10px; border-radius: 5px; margin: 10px 0; min-height: 50px;">
+                <em>Click "Get Subscription Stats" to see server information</em>
+            </div>
+        </div>
+
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        const VAPID_PUBLIC_KEY = 'BPslBjReqITCyxu9e7YchOxRdRv1rwN9xWWTpKd2KsYAOBIz97JtqaYHUQDUD9vOdZZpeybfhq0khvg5S9vyEp8';
+
+        function log(message, type = '') {
+            const logEl = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type ? ` class="${type}"` : '';
+            logEl.innerHTML += `<span${className}>[${timestamp}] ${message}</span>\n`;
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        function updateStatus(message) {
+            document.getElementById('status').textContent = `Status: ${message}`;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding)
+                .replace(/\-/g, '+')
+                .replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        }
+
+        function checkPlatform() {
+            const ua = navigator.userAgent;
+            const isIOS = /iPad|iPhone|iPod/.test(ua);
+            const isAndroid = /Android/.test(ua);
+            const isSafari = /Safari/.test(ua) && !/Chrome/.test(ua);
+            const isChrome = /Chrome/.test(ua);
+            const isFirefox = /Firefox/.test(ua);
+            const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+            
+            log('📱 Platform Detection:');
+            log(`Browser: ${isChrome ? 'Chrome' : isFirefox ? 'Firefox' : isSafari ? 'Safari' : 'Other'}`);
+            log(`iOS: ${isIOS ? 'Yes' : 'No'}`);
+            log(`Android: ${isAndroid ? 'Yes' : 'No'}`);
+            log(`Safari: ${isSafari ? 'Yes' : 'No'}`);
+            log(`Chrome: ${isChrome ? 'Yes' : 'No'}`);
+            log(`Firefox: ${isFirefox ? 'Yes' : 'No'}`);
+            log(`Standalone: ${isStandalone ? 'Yes' : 'No'}`);
+            log(`Service Worker Support: ${'serviceWorker' in navigator ? 'Yes' : 'No'}`);
+            log(`Notification Support: ${'Notification' in window ? 'Yes' : 'No'}`);
+            log(`Push Manager Support: ${('serviceWorker' in navigator) && ('PushManager' in window) ? 'Yes' : 'No'}`);
+            
+            // Browser-specific push service notes
+            if (isIOS && isSafari) {
+                log('📝 Note: iOS Safari requires PWA to be added to home screen for push notifications', 'info');
+            }
+            if (isFirefox) {
+                log('📝 Note: Firefox uses Mozilla push service', 'info');
+            }
+            if (isChrome) {
+                log('📝 Note: Chrome uses FCM (Firebase Cloud Messaging)', 'info');
+            }
+            
+            updateStatus('Platform check complete');
+        }
+
+        async function checkServiceWorker() {
+            log('🔍 Checking service workers...');
+            
+            if (!('serviceWorker' in navigator)) {
+                log('❌ Service Workers not supported', 'error');
+                return;
+            }
+
+            try {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                log(`📊 Found ${registrations.length} service worker(s)`, 'success');
+                
+                for (let i = 0; i < registrations.length; i++) {
+                    const reg = registrations[i];
+                    log(`SW ${i + 1}: ${reg.scope} - ${reg.active ? 'Active' : 'Inactive'}`);
+                }
+                
+                updateStatus(`${registrations.length} service worker(s) found`);
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function requestPermission() {
+            log('🔔 Requesting notification permission...');
+            
+            try {
+                if (!('Notification' in window)) {
+                    log('❌ Notifications not supported', 'error');
+                    return;
+                }
+                
+                const permission = await Notification.requestPermission();
+                log(`📋 Permission: ${permission}`, permission === 'granted' ? 'success' : 'error');
+                updateStatus(`Permission: ${permission}`);
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function subscribe() {
+            log('📬 Subscribing to push notifications...');
+            
+            try {
+                if (Notification.permission !== 'granted') {
+                    log('⚠️ Need permission first', 'warning');
+                    return;
+                }
+
+                log('� Getting existing service worker registration...');
+                let registration = await navigator.serviceWorker.getRegistration('/');
+                
+                if (!registration) {
+                    log('🔧 No existing registration, creating new one...');
+                    registration = await navigator.serviceWorker.register('/sw-custom.js');
+                    log('✅ Service worker registered successfully');
+                } else {
+                    log('✅ Using existing service worker registration');
+                }
+                
+                log('⏳ Waiting for service worker to be ready...');
+                await navigator.serviceWorker.ready;
+                log('✅ Service worker ready for subscription');
+                
+                // Check for existing subscription first
+                log('🔍 Checking for existing subscription...');
+                const existingSubscription = await registration.pushManager.getSubscription();
+                if (existingSubscription) {
+                    log('✅ Found existing subscription, using it...', 'success');
+                    log(`📋 Endpoint: ${existingSubscription.endpoint.substring(0, 50)}...`);
+                    
+                    // Test if the existing subscription is still valid by sending it to server
+                    const response = await fetch('/api/save-subscription', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            endpoint: existingSubscription.endpoint,
+                            keys: {
+                                p256dh: btoa(String.fromCharCode.apply(null, new Uint8Array(existingSubscription.getKey('p256dh')))),
+                                auth: btoa(String.fromCharCode.apply(null, new Uint8Array(existingSubscription.getKey('auth'))))
+                            }
+                        })
+                    });
+
+                    const result = await response.json();
+                    log(`✅ Server: ${result.message}`, 'success');
+                    updateStatus('Existing subscription confirmed');
+                    return;
+                }
+                
+                log('🔑 Converting VAPID key...');
+                log(`🔍 VAPID key: ${VAPID_PUBLIC_KEY}`);
+                log(`🔍 VAPID key length: ${VAPID_PUBLIC_KEY.length} characters`);
+                
+                const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+                log(`✅ VAPID key converted, length: ${applicationServerKey.length} bytes`);
+                
+                // Validate VAPID key length (should be 65 bytes for P-256)
+                if (applicationServerKey.length !== 65) {
+                    log(`⚠️ Warning: VAPID key should be 65 bytes, got ${applicationServerKey.length}`, 'warning');
+                }
+                
+                log('📡 Calling pushManager.subscribe...');
+                const subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: applicationServerKey
+                });
+
+                log('✅ Push subscription created successfully');
+                log(`📋 Endpoint: ${subscription.endpoint.substring(0, 50)}...`);
+                
+                const response = await fetch('/api/save-subscription', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        endpoint: subscription.endpoint,
+                        keys: {
+                            p256dh: btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('p256dh')))),
+                            auth: btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('auth'))))
+                        }
+                    })
+                });
+
+                const result = await response.json();
+                log(`✅ Server: ${result.message}`, 'success');
+                updateStatus('Successfully subscribed');
+            } catch (error) {
+                log(`❌ Subscription failed: ${error.name} - ${error.message}`, 'error');
+                if (error.name === 'NotSupportedError') {
+                    log('💡 Push messaging may not be supported on this device/browser', 'warning');
+                } else if (error.name === 'InvalidStateError') {
+                    log('💡 Service worker is in an invalid state', 'warning');
+                } else if (error.name === 'NotAllowedError') {
+                    log('💡 Permission denied or notification blocked', 'warning');
+                }
+                updateStatus(`Subscription failed: ${error.message}`);
+            }
+        }
+
+        async function testPush() {
+            log('🚀 Testing basic push...');
+            
+            try {
+                const response = await fetch('/api/test-push');
+                const result = await response.json();
+                log(`✅ ${result.message}`, 'success');
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testNotification(type) {
+            const subscriptionDropdown = document.getElementById('subscriptionDropdown');
+            const selectedSubscriptionId = subscriptionDropdown.value;
+            
+            if (selectedSubscriptionId) {
+                log(`🎯 Testing ${type} notification to subscription #${selectedSubscriptionId}...`);
+            } else {
+                log(`🚀 Testing ${type} notification to all subscriptions...`);
+            }
+            
+            try {
+                // Build URL with subscription_id if one is selected
+                let url = `/api/test-push?type=${type}`;
+                if (selectedSubscriptionId) {
+                    url += `&subscription_id=${selectedSubscriptionId}`;
+                }
+                
+                const response = await fetch(url);
+                const result = await response.json();
+                
+                if (result.status === 'success' || result.status === 'partial_success') {
+                    log(`✅ ${result.message}`, 'success');
+                    log(`📱 Content: ${result.notification_content}`, 'info');
+                    log(`🎯 Target: ${result.target || 'all subscriptions'}`, 'info');
+                    
+                    if (result.endpoint_preview) {
+                        log(`📡 Endpoint: ${result.endpoint_preview}`, 'info');
+                    }
+                    
+                    // Update targeted test status
+                    if (selectedSubscriptionId) {
+                        document.getElementById('targetedTestStatus').innerHTML = 
+                            `<span style="color: #28a745">✅ Successfully sent ${type} to subscription #${selectedSubscriptionId}</span>`;
+                    }
+                } else {
+                    log(`❌ ${result.message}`, 'error');
+                    if (result.available_types) {
+                        log(`Available types: ${result.available_types.join(', ')}`, 'warning');
+                    }
+                    
+                    if (selectedSubscriptionId) {
+                        document.getElementById('targetedTestStatus').innerHTML = 
+                            `<span style="color: #dc3545">❌ ${result.message}</span>`;
+                    }
+                }
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+                if (selectedSubscriptionId) {
+                    document.getElementById('targetedTestStatus').innerHTML = 
+                        `<span style="color: #dc3545">❌ Error: ${error.message}</span>`;
+                }
+            }
+        }
+
+        async function testScenario(scenario) {
+            log(`🎭 Testing ${scenario} scenario...`);
+            
+            const scenarios = {
+                'morning_routine': ['ovulation', 'period'],
+                'lunch_health': ['health'],
+                'evening_wild': ['wild_tips', 'encouragement', 'period_passion'],
+                'bedtime_celebration': ['achievements', 'orgasm_facts', 'connection', 'streaks']
+            };
+            
+            if (!scenarios[scenario]) {
+                log(`❌ Unknown scenario: ${scenario}`, 'error');
+                return;
+            }
+            
+            const types = scenarios[scenario];
+            const randomType = types[Math.floor(Math.random() * types.length)];
+            
+            log(`🎯 Selected ${randomType} for ${scenario}`);
+            await testNotification(randomType);
+        }
+
+        async function forceNewSubscription() {
+            log('🔄 Forcing new subscription (clearing existing first)...');
+            
+            try {
+                if (Notification.permission !== 'granted') {
+                    log('⚠️ Need permission first', 'warning');
+                    return;
+                }
+
+                // First clear all existing subscriptions
+                await clearAllSubscriptions();
+                
+                // Wait a bit for cleanup
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                log('🔧 Registering fresh service worker...');
+                const registration = await navigator.serviceWorker.register('/sw-custom.js');
+                log('✅ Service worker registered successfully');
+                
+                log('⏳ Waiting for service worker to be ready...');
+                await navigator.serviceWorker.ready;
+                log('✅ Service worker ready for subscription');
+                
+                log('🔑 Converting VAPID key...');
+                const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+                log(`✅ VAPID key converted, length: ${applicationServerKey.length} bytes`);
+                
+                log('📡 Creating fresh push subscription...');
+                const subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: applicationServerKey
+                });
+
+                log('✅ Fresh push subscription created successfully');
+                log(`📋 Endpoint: ${subscription.endpoint.substring(0, 50)}...`);
+                
+                const response = await fetch('/api/save-subscription', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        endpoint: subscription.endpoint,
+                        keys: {
+                            p256dh: btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('p256dh')))),
+                            auth: btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('auth'))))
+                        }
+                    })
+                });
+
+                const result = await response.json();
+                log(`✅ Server: ${result.message}`, 'success');
+                updateStatus('Fresh subscription created successfully');
+            } catch (error) {
+                log(`❌ Force subscription failed: ${error.name} - ${error.message}`, 'error');
+                if (error.name === 'NotSupportedError') {
+                    log('💡 Push messaging may not be supported on this device/browser', 'warning');
+                } else if (error.name === 'InvalidStateError') {
+                    log('💡 Service worker is in an invalid state', 'warning');
+                } else if (error.name === 'NotAllowedError') {
+                    log('💡 Permission denied or notification blocked', 'warning');
+                }
+                updateStatus(`Force subscription failed: ${error.message}`);
+            }
+        }
+
+        async function clearAllSubscriptions() {
+            log('🧹 Clearing ALL push subscriptions...');
+            
+            try {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                log(`📊 Found ${registrations.length} service worker registration(s)`);
+                
+                for (let registration of registrations) {
+                    const subscription = await registration.pushManager.getSubscription();
+                    if (subscription) {
+                        log(`🗑️ Unsubscribing from: ${subscription.endpoint.substring(0, 50)}...`);
+                        await subscription.unsubscribe();
+                        log('✅ Subscription removed');
+                    } else {
+                        log('ℹ️ No subscription found for this registration');
+                    }
+                }
+                
+                log('✅ All local subscriptions cleared');
+                updateStatus('All subscriptions cleared');
+            } catch (error) {
+                log(`❌ Error clearing subscriptions: ${error.message}`, 'error');
+            }
+        }
+
+        async function clearSubscriptions() {
+            log('🗑️ Clearing subscriptions...');
+            
+            try {
+                const registration = await navigator.serviceWorker.ready;
+                const subscription = await registration.pushManager.getSubscription();
+                if (subscription) {
+                    await subscription.unsubscribe();
+                    log('✅ Local subscription cleared', 'success');
+                }
+
+                const response = await fetch('/api/cleanup-subscriptions', { method: 'POST' });
+                const result = await response.json();
+                log(`✅ Server: ${result.message}`, 'success');
+                updateStatus('Subscriptions cleared');
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+
+
+        async function rapidTest() {
+            log('⚡ Starting rapid test - sending 5 random notifications...');
+            
+            const types = ['wild_tips', 'health', 'achievements', 'orgasm_facts', 'connection', 
+                          'encouragement', 'period_passion', 'double_entry', 'streaks'];
+            
+            for (let i = 0; i < 5; i++) {
+                const randomType = types[Math.floor(Math.random() * types.length)];
+                log(`⚡ Rapid test ${i + 1}/5: ${randomType}`);
+                await testNotification(randomType);
+                
+                // Small delay between tests
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            
+            log('✅ Rapid test completed!', 'success');
+        }
+
+        async function getSubscriptionStats() {
+            log('📊 Getting subscription statistics...');
+            
+            try {
+                // Use the proxy endpoint
+                const response = await fetch('/api/subscription-stats');
+                const stats = await response.json();
+                
+                log(`✅ Server has ${stats.total} subscriptions`, 'success');
+                
+                const statsDisplay = document.getElementById('statsDisplay');
+                let displayHTML = `<strong>📊 Subscription Statistics</strong><br>`;
+                displayHTML += `Total Subscriptions: <span style="color: #28a745">${stats.total}</span><br><br>`;
+                
+                if (stats.subscriptions && stats.subscriptions.length > 0) {
+                    displayHTML += `<strong>Active Subscriptions:</strong><br>`;
+                    stats.subscriptions.forEach((sub, index) => {
+                        // Determine device type
+                        let deviceIcon = '📱';
+                        if (sub.endpoint.includes('fcm.googleapis.com')) {
+                            deviceIcon = '🤖';
+                        } else if (sub.endpoint.includes('web.push.apple.com')) {
+                            deviceIcon = '🍎';
+                        } else if (sub.endpoint.includes('updates.push.services.mozilla.com')) {
+                            deviceIcon = '🦊';
+                        }
+                        
+                        // Create a shortened endpoint for display
+                        const shortEndpoint = sub.endpoint.length > 60 
+                            ? sub.endpoint.substring(0, 60) + '...' 
+                            : sub.endpoint;
+                        
+                        displayHTML += `<div class="subscription-item">`;
+                        displayHTML += `${deviceIcon} <strong>Device #${sub.id}</strong><br>`;
+                        displayHTML += `<small style="color: #aaa; word-break: break-all;">${shortEndpoint}</small>`;
+                        displayHTML += `</div>`;
+                    });
+                } else {
+                    displayHTML += `<em style="color: #ffc107">No active subscriptions found</em>`;
+                }
+                
+                statsDisplay.innerHTML = displayHTML;
+                
+                // Also populate the subscription dropdown for targeted testing
+                populateSubscriptionDropdown(stats.subscriptions || []);
+                
+            } catch (error) {
+                log(`❌ Error getting stats: ${error.message}`, 'error');
+                document.getElementById('statsDisplay').innerHTML = 
+                    `<span style="color: #dc3545">❌ Error loading stats: ${error.message}</span>`;
+            }
+        }
+
+        function populateSubscriptionDropdown(subscriptions) {
+            const dropdown = document.getElementById('subscriptionDropdown');
+            // Clear existing options except the first one
+            dropdown.innerHTML = '<option value="">Send to ALL devices</option>';
+            
+            if (subscriptions && subscriptions.length > 0) {
+                subscriptions.forEach(sub => {
+                    const option = document.createElement('option');
+                    option.value = sub.id;
+                    
+                    // Determine device type based on endpoint
+                    let deviceType = '📱';
+                    if (sub.endpoint.includes('fcm.googleapis.com')) {
+                        deviceType = '🤖 Android/Chrome';
+                    } else if (sub.endpoint.includes('web.push.apple.com')) {
+                        deviceType = '🍎 iOS/Safari';
+                    } else if (sub.endpoint.includes('updates.push.services.mozilla.com')) {
+                        deviceType = '🦊 Firefox';
+                    }
+                    
+                    // Show device type and ID
+                    option.textContent = `${deviceType} - Device #${sub.id}`;
+                    dropdown.appendChild(option);
+                });
+                
+                // Update status
+                document.getElementById('targetedTestStatus').innerHTML = 
+                    `<span style="color: #28a745">✅ ${subscriptions.length} devices available. Select one above to send targeted notifications, or leave on "Send to ALL" for broadcast.</span>`;
+            } else {
+                // Update status
+                document.getElementById('targetedTestStatus').innerHTML = 
+                    `<span style="color: #ffc107">⚠️ No devices found. Use "Subscribe to Push" below first to enable notifications.</span>`;
+            }
+        }
+
+        async function refreshSubscriptionList() {
+            log('🔄 Refreshing subscription list...');
+            await getSubscriptionStats();
+        }
+
+
+
+        async function getServerStatus() {
+            log('🔍 Checking server status...');
+            
+            try {
+                // Use the proxy endpoint to check health
+                const response = await fetch('/api/health');
+                if (response.ok) {
+                    log('✅ Server is healthy and responding', 'success');
+                    
+                    // Also check if we can reach the notification endpoint
+                    const testResponse = await fetch('/api/test-push?type=random');
+                    const testResult = await testResponse.json();
+                    
+                    if (testResult.available_types) {
+                        log(`✅ Notification system online with ${testResult.available_types.length} message types`, 'success');
+                        
+                        const statsDisplay = document.getElementById('statsDisplay');
+                        statsDisplay.innerHTML = `
+                            <strong>🟢 Server Status: ONLINE</strong><br>
+                            Notification Types Available: <span style="color: #28a745">${testResult.available_types.length}</span><br>
+                            Types: ${testResult.available_types.join(', ')}<br>
+                            <small style="color: #6c757d">Last checked: ${new Date().toLocaleTimeString()}</small>
+                        `;
+                    }
+                } else {
+                    log('❌ Server health check failed', 'error');
+                }
+            } catch (error) {
+                log(`❌ Server unreachable: ${error.message}`, 'error');
+                document.getElementById('statsDisplay').innerHTML = 
+                    `<span style="color: #dc3545">🔴 Server Status: OFFLINE<br>Error: ${error.message}</span>`;
+            }
+        }
+
+        // Auto-check on load
+        window.addEventListener('load', () => {
+            checkPlatform();
+            getServerStatus();
+        });
+    </script>
+</body>
+</html>

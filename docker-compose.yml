@@ -1,0 +1,106 @@
+services:
+  api:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: cuddles_api
+    expose:
+      - "8500"
+    volumes:
+      - ./app:/app/app
+      - ./instance:/app/instance:delegated
+    environment:
+      - FLASK_ENV=production
+      - FLASK_APP=app:app
+      - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
+      - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY}
+      - VAPID_EMAIL=${VAPID_EMAIL}
+      - NOTIFICATION_TIMES=09:00,13:00,18:30,21:30
+      - UI_PASSWORD=${UI_PASSWORD}
+      - CORS_ORIGIN=https://cuddles.demiahmed.com
+      - TZ=Asia/Singapore
+    networks:
+      - cuddles_network
+      - caddy_proxy
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8500/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: "128M"
+        reservations:
+          cpus: "0.10"
+          memory: "64M"
+
+  ui:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+    container_name: cuddles_ui
+    expose:
+      - "3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=https://cuddles.demiahmed.com/api
+      - NEXT_PUBLIC_VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - cuddles_network
+      - caddy_proxy
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: "256M"
+        reservations:
+          cpus: "0.10"
+          memory: "128M"
+
+  backup:
+    image: alpine:latest
+    container_name: backup
+    volumes:
+      - ./instance:/app/instance:delegated
+      - ./scripts/backup.sh:/backup.sh
+    environment:
+      - TZ=Asia/Singapore
+      - BACKUP_RETENTION_DAYS=30
+    command: >
+      sh -c '
+        apk add --no-cache sqlite bash tzdata &&
+        chmod +x /backup.sh &&
+        /bin/sh /backup.sh
+      '
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - cuddles_network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.10"
+          memory: "32M"
+        reservations:
+          cpus: "0.05"
+          memory: "16M"
+
+networks:
+  cuddles_network:
+    name: cuddles_network
+    driver: bridge
+  caddy_proxy:
+    external: true

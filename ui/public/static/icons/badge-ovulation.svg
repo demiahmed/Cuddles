@@ -1,0 +1,17 @@
+<svg width="72" height="72" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+  <!-- Monochrome badge for Android status bar - ovulation design -->
+  <rect width="72" height="72" fill="white"/>
+  <circle cx="36" cy="36" r="14" stroke="black" stroke-width="3" fill="white"/>
+  <!-- Petals around the center -->
+  <ellipse cx="36" cy="20" rx="3" ry="8" fill="black"/>
+  <ellipse cx="52" cy="36" rx="8" ry="3" fill="black"/>
+  <ellipse cx="36" cy="52" rx="3" ry="8" fill="black"/>
+  <ellipse cx="20" cy="36" rx="8" ry="3" fill="black"/>
+  <!-- Diagonal petals -->
+  <ellipse cx="46" cy="26" rx="6" ry="3" fill="black" transform="rotate(45 46 26)"/>
+  <ellipse cx="46" cy="46" rx="6" ry="3" fill="black" transform="rotate(-45 46 46)"/>
+  <ellipse cx="26" cy="46" rx="6" ry="3" fill="black" transform="rotate(45 26 46)"/>
+  <ellipse cx="26" cy="26" rx="6" ry="3" fill="black" transform="rotate(-45 26 26)"/>
+  <!-- Center dot -->
+  <circle cx="36" cy="36" r="4" fill="black"/>
+</svg>

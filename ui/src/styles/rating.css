@@ -1,0 +1,43 @@
+.star-rating {
+  display: inline-flex;
+  flex-direction: row-reverse;
+  gap: 0.25rem;
+}
+
+.star-rating input[type="radio"] {
+  display: none;
+}
+
+.star-rating label {
+  cursor: pointer;
+  color: #d1d5db; /* gray-300 */
+  transition: all 0.2s ease-in-out;
+}
+
+/* Hover effect */
+.star-rating:not(:hover) label:hover {
+  transform: scale(1.1);
+}
+
+/* Fill stars on hover */
+.star-rating > div:hover label,
+.star-rating > div:hover ~ div label {
+  color: #f59e0b; /* yellow-500 */
+}
+
+/* Fill stars when selected */
+.star-rating > div:has(input[type="radio"]:checked) label,
+.star-rating > div:has(input[type="radio"]:checked) ~ div label {
+  color: #f59e0b; /* yellow-500 */
+}
+
+/* Static star display for view mode */
+.star-rating-static {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.star-rating-static svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}

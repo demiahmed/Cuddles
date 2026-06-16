@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <defs>
+    <style>
+      .heart-fill { fill: #ec4899; }
+      .bg-circle { fill: #ffffff; }
+    </style>
+  </defs>
+  <!-- White background circle -->
+  <circle class="bg-circle" cx="96" cy="96" r="96"/>
+  <!-- Heart icon -->
+  <path class="heart-fill" d="M96 150.6l-10.4-9.4C65.6 123.2 48 107.2 48 86.8c0-20.8 16.4-37.2 37.2-37.2 11.6 0 22.8 5.4 30.8 14.8 8-9.4 19.2-14.8 30.8-14.8 20.8 0 37.2 16.4 37.2 37.2 0 20.4-17.6 36.4-37.6 54.4L96 150.6z"/>
+</svg>

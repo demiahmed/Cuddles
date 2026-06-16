@@ -1,0 +1,28 @@
+# Database
+instance/*.db
+instance/backups/
+
+# Environment
+.env
+*.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+
+# Next.js
+ui/.next/
+ui/node_modules/
+ui/.env.local
+
+# Docker
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

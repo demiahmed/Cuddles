@@ -1,0 +1,97 @@
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.125rem;
+  margin: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .calendar-grid {
+    gap: 0.0625rem;
+    padding: 0;
+  }
+}
+
+.calendar-grid > div:not(.day-cell) {
+  text-align: center;
+  font-weight: 500;
+  padding: 0.25rem 0;
+}
+
+.day-cell {
+  aspect-ratio: 3/4;
+  transition: all 0.2s ease-in-out;
+  padding: 0.25rem !important;
+  min-height: 3.5rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Mobile - unchanged */
+@media (max-width: 640px) {
+  .day-cell {
+    min-height: 4.5rem;
+    padding: 0.25rem !important;
+    aspect-ratio: 4/5;
+  }
+}
+
+/* Tablets - 10% smaller */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .day-cell {
+    min-height: 3.15rem; /* 10% smaller than 3.5rem */
+  }
+  
+  .calendar-grid {
+    gap: 0.125rem; /* Keep standard gap */
+  }
+}
+
+/* Desktop/Monitors - 20% smaller */
+@media (min-width: 1025px) {
+  .day-cell {
+    min-height: 2.8rem; /* 20% smaller than 3.5rem */
+  }
+  
+  .calendar-grid {
+    gap: 0.125rem; /* Keep standard gap */
+  }
+}
+
+.day-cell.today {
+  border-color: #db2777; /* pink-600 */
+  background-color: #fdf2f8; /* pink-50 */
+}
+
+.day-cell.predicted-period {
+  background-color: #fecaca !important; /* red-200 */
+  border-width: 4px !important;
+  border-color: #ef4444 !important; /* red-500 */
+}
+
+.day-cell.predicted-ovulation {
+  background-color: #fde68a !important; /* yellow-200 */
+  border-width: 4px !important;
+  border-color: #eab308 !important; /* yellow-500 */
+}
+
+.day-cell .icon-container {
+  display: flex;
+  gap: 0.125rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-height: 1.25rem;
+}
+
+.day-cell svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}

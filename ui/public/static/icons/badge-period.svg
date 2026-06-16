@@ -1,0 +1,10 @@
+<svg width="72" height="72" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+  <!-- Monochrome badge for Android status bar - period calendar design -->
+  <rect width="72" height="72" fill="white"/>
+  <rect x="12" y="18" width="48" height="40" stroke="black" stroke-width="3" fill="white"/>
+  <line x1="12" y1="26" x2="60" y2="26" stroke="black" stroke-width="2"/>
+  <line x1="20" y1="14" x2="20" y2="22" stroke="black" stroke-width="2"/>
+  <line x1="52" y1="14" x2="52" y2="22" stroke="black" stroke-width="2"/>
+  <!-- Drop symbol for period -->
+  <path d="M36 34C36 34 30 40 30 44C30 47.3 32.7 50 36 50C39.3 50 42 47.3 42 44C42 40 36 34 36 34Z" fill="black"/>
+</svg>

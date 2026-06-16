@@ -1,0 +1,80 @@
+services:
+  api-dev:
+    build:
+      context: ./app
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8500:8500"
+    volumes:
+      - ./app:/app/app
+      - ./instance:/app/instance
+      - ./data:/app/data
+    environment:
+      - FLASK_ENV=development
+      - FLASK_APP=app.app:app
+      - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
+      - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY}
+      - VAPID_EMAIL=${VAPID_EMAIL}
+      - NOTIFICATION_TIMES=${NOTIFICATION_TIMES:-08:30,15:00,17:50,19:45}
+      - CORS_ORIGIN=http://localhost:3000
+      - TZ=Asia/Singapore
+    networks:
+      - cuddles_network
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8500/api/stats/sex"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 5s
+
+  ui-dev:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile.dev
+    ports:
+      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:3001:3001"  # HTTPS port for PWA testing
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8500
+      - NEXT_PRIVATE_API_URL=http://api-dev:8500/api
+      - NEXT_PUBLIC_VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
+      - HTTPS=true  # Set to true in .env for PWA testing
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - cuddles_network
+    depends_on:
+      - api-dev
+    volumes:
+      - ./ui:/app
+      - /app/node_modules
+
+  # backup:
+  #   image: alpine:latest
+  #   container_name: backup
+  #   volumes:
+  #     - ./instance:/app/instance:delegated
+  #     - ./instance/backups:/app/instance/backups:delegated
+  #     - ./backup.sh:/backup.sh:ro
+  #   environment:
+  #     - TZ=Asia/Singapore
+  #     - BACKUP_RETENTION_DAYS=7
+  #   command: >
+  #     sh -c "
+  #       apk add --no-cache sqlite bash tzdata &&
+  #       chmod +x /backup.sh &&
+  #       echo '0 8 * * * /bin/sh /backup.sh >> /app/instance/backups/backup.log 2>&1' > /etc/crontabs/root &&
+  #       crond -f -L /dev/stdout
+  #     "
+  #   depends_on:
+  #     api:
+  #       condition: service_healthy
+
+networks:
+  cuddles_network:
+    name: cuddles_network
+    driver: bridge

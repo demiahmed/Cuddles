@@ -1,0 +1,23 @@
+<svg width="192" height="192" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
+  <rect width="192" height="192" rx="32" fill="#ec4899"/>
+  <g transform="translate(48, 48)">
+    <!-- Calendar icon -->
+    <rect x="12" y="24" width="72" height="60" rx="8" fill="white" stroke="none"/>
+    <rect x="12" y="24" width="72" height="16" rx="8" fill="rgba(255,255,255,0.9)"/>
+    <rect x="20" y="8" width="4" height="24" fill="white"/>
+    <rect x="72" y="8" width="4" height="24" fill="white"/>
+    
+    <!-- Period dots -->
+    <circle cx="28" cy="44" r="3" fill="#ec4899"/>
+    <circle cx="40" cy="44" r="3" fill="#ec4899"/>
+    <circle cx="52" cy="44" r="3" fill="#ec4899"/>
+    <circle cx="64" cy="44" r="3" fill="#ec4899"/>
+    <circle cx="28" cy="56" r="3" fill="#ec4899"/>
+    <circle cx="40" cy="56" r="3" fill="#ec4899"/>
+    <circle cx="52" cy="56" r="3" fill="#ec4899"/>
+    
+    <!-- Cycle symbol -->
+    <path d="M68 68 Q76 60 76 68 Q76 76 68 76 Q60 76 60 68 Q60 60 68 60" 
+          fill="none" stroke="white" stroke-width="2"/>
+  </g>
+</svg>
