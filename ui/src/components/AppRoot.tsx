@@ -18,7 +18,7 @@ import TabNavigation from '@/components/shared/TabNavigation';
 import { Entry, PeriodStats, SexStats } from '@/types';
 import { WellnessEntry } from '@/types/wellness';
 import { fetchData, loadData as fetchEntries } from '@/utils/api';
-import { fetchWellnessMonth } from '@/utils/wellness';
+import { fetchWellnessMonth, deleteWellnessEntry } from '@/utils/wellness';
 import { formatDate } from '@/utils/date';
 
 type ActivePanel = 'calendar' | 'period' | 'intimacy' | 'wellness';
@@ -157,6 +157,17 @@ export default function AppRoot() {
     window.history.pushState({}, '', url.toString());
   }, [selectedDate]);
 
+  const handleDeleteWellnessFromCalendar = useCallback(async () => {
+    if (!selectedDate) return;
+    const dateStr = formatDate(selectedDate);
+    await deleteWellnessEntry(dateStr);
+    setIsModalOpen(false);
+    setSelectedDate(null);
+    const year = currentDisplayDate.getFullYear();
+    const month = currentDisplayDate.getMonth();
+    await loadData(year, month);
+  }, [selectedDate, currentDisplayDate, loadData]);
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8">
       <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 w-full max-w-4xl">
@@ -214,6 +225,8 @@ export default function AppRoot() {
           onClose={handleModalClose}
           onSave={handleEntrySaved}
           onOpenWellness={handleOpenWellnessFromCalendar}
+          wellnessLog={wellnessLogs.find(w => w.date === formatDate(selectedDate)) ?? null}
+          onDeleteWellness={handleDeleteWellnessFromCalendar}
         />
       )}
     </div>

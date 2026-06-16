@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import FlowOptions from '@/components/period/FlowOptions';
 import { Entry, FlowType, ProtectionType } from '@/types';
+import { WellnessEntry } from '@/types/wellness';
 import { saveEntry, deleteEntry } from '@/utils/api';
 import { isFutureDate, formatDate } from '@/utils/date';
 import '@/styles/rating.css';
@@ -11,9 +12,11 @@ interface EntryModalProps {
   onClose: () => void;
   onSave: (deletedEntryId?: string) => Promise<void>;
   onOpenWellness?: () => void;
+  wellnessLog?: WellnessEntry | null;
+  onDeleteWellness?: () => Promise<void>;
 }
 
-export default function EntryModal({ date, entries, onClose, onSave, onOpenWellness }: EntryModalProps) {
+export default function EntryModal({ date, entries, onClose, onSave, onOpenWellness, wellnessLog, onDeleteWellness }: EntryModalProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [flow, setFlow] = useState<FlowType>('none');
   const [periodEntryType, setPeriodEntryType] = useState<'period_start' | 'period_end'>('period_start');
@@ -24,6 +27,7 @@ export default function EntryModal({ date, entries, onClose, onSave, onOpenWelln
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState('');
   const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
+  const [deletingWellness, setDeletingWellness] = useState(false);
 
   useEffect(() => {
     // Use local timezone to prevent date shift
@@ -642,13 +646,38 @@ export default function EntryModal({ date, entries, onClose, onSave, onOpenWelln
             </p>
           )}
           {onOpenWellness && (
-            <button
-              type="button"
-              onClick={onOpenWellness}
-              className="w-full mt-3 text-sm text-pink-500 hover:text-pink-700 font-medium text-center py-1.5 rounded-lg hover:bg-pink-50 transition-colors"
-            >
-              📓 Log wellness for this day →
-            </button>
+            wellnessLog ? (
+              <div className="flex gap-2 mt-3">
+                <button
+                  type="button"
+                  onClick={onOpenWellness}
+                  className="flex-1 text-sm text-pink-500 hover:text-pink-700 font-medium text-center py-1.5 rounded-lg hover:bg-pink-50 transition-colors"
+                >
+                  ✏️ Modify wellness
+                </button>
+                <button
+                  type="button"
+                  disabled={deletingWellness}
+                  onClick={async () => {
+                    if (!confirm('Delete this wellness log? This cannot be undone.')) return;
+                    setDeletingWellness(true);
+                    await onDeleteWellness?.();
+                    setDeletingWellness(false);
+                  }}
+                  className="flex-1 text-sm text-red-400 hover:text-red-600 font-medium text-center py-1.5 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
+                >
+                  {deletingWellness ? 'Deleting…' : '🗑 Delete wellness'}
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={onOpenWellness}
+                className="w-full mt-3 text-sm text-pink-500 hover:text-pink-700 font-medium text-center py-1.5 rounded-lg hover:bg-pink-50 transition-colors"
+              >
+                📓 Log wellness for this day →
+              </button>
+            )
           )}
         </div>
       </div>
