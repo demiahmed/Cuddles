@@ -57,10 +57,24 @@ def create_app():
         os.makedirs(instance_dir, exist_ok=True)
         print(f"Created instance directory: {instance_dir}")
 
-    # Create database tables
+    # Create database tables and run lightweight column migrations
     with app.app_context():
         db.create_all()
         print("Tables created!")
+        # Add columns introduced after initial schema (SQLite doesn't auto-migrate)
+        import sqlite3 as _sqlite3
+        _db_path = app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
+        try:
+            _conn = _sqlite3.connect(_db_path)
+            _existing = [r[1] for r in _conn.execute('PRAGMA table_info(daily_log)').fetchall()]
+            for _col, _type in [('partner_rating', 'INTEGER')]:
+                if _col not in _existing:
+                    _conn.execute(f'ALTER TABLE daily_log ADD COLUMN {_col} {_type}')
+                    _conn.commit()
+                    print(f"Migrated: added {_col} to daily_log")
+            _conn.close()
+        except Exception as _e:
+            print(f"Migration warning: {_e}")
 
     # Schedule multiple daily notification jobs
     from app.services.notification_service import NotificationService

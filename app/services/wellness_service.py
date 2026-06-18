@@ -61,6 +61,7 @@ class WellnessService:
         entry.pain_locations = json.dumps(pl) if pl else None
         entry.pain_level = data.get('pain_level')
         entry.pain_notes = data.get('pain_notes')
+        entry.partner_rating = data.get('partner_rating')
         entry.notes = data.get('notes')
         entry.updated_at = datetime.utcnow().isoformat()
 

@@ -81,6 +81,7 @@ export default function WellnessForm({ date, existing, onClose, onSaved, onDelet
   const [painLocations, setPainLocations] = useState<string[]>(existing?.pain_locations ?? []);
   const [painLevel, setPainLevel] = useState<number | null>(existing?.pain_level ?? null);
   const [painNotes, setPainNotes] = useState(existing?.pain_notes ?? '');
+  const [partnerRating, setPartnerRating] = useState<number | null>(existing?.partner_rating ?? null);
   const [notes, setNotes] = useState(existing?.notes ?? '');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -112,6 +113,7 @@ export default function WellnessForm({ date, existing, onClose, onSaved, onDelet
       pain_locations: painLocations,
       pain_level: painLevel,
       pain_notes: painNotes || null,
+      partner_rating: partnerRating,
       notes: notes || null,
     });
     setSaving(false);
@@ -348,6 +350,35 @@ export default function WellnessForm({ date, existing, onClose, onSaved, onDelet
                 />
               </div>
             )}
+          </section>
+
+          {/* ── Partner ── */}
+          <section>
+            <SectionTitle>Partner & Connection 💕</SectionTitle>
+            <p className="text-xs text-gray-500 mb-2.5">How did your partner treat you today?</p>
+            <div className="flex gap-2 justify-between">
+              {([
+                { n: 1, emoji: '😞', label: 'Rough' },
+                { n: 2, emoji: '😐', label: 'Okay' },
+                { n: 3, emoji: '🙂', label: 'Good' },
+                { n: 4, emoji: '💕', label: 'Great' },
+                { n: 5, emoji: '🥰', label: 'Perfect' },
+              ]).map(({ n, emoji, label }) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setPartnerRating(partnerRating === n ? null : n)}
+                  className={`flex-1 flex flex-col items-center py-2.5 rounded-xl border-2 transition-all ${
+                    partnerRating === n
+                      ? 'border-rose-400 bg-rose-50 shadow'
+                      : 'border-gray-200 hover:border-rose-200'
+                  }`}
+                >
+                  <span className="text-xl">{emoji}</span>
+                  <span className="text-[10px] text-gray-600 mt-0.5">{label}</span>
+                </button>
+              ))}
+            </div>
           </section>
 
           {/* ── Journal ── */}

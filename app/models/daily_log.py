@@ -37,6 +37,9 @@ class DailyLog(BaseModel):
     pain_level = db.Column(db.Integer, nullable=True)       # 1-10
     pain_notes = db.Column(db.Text, nullable=True)
 
+    # Partner / relationship
+    partner_rating = db.Column(db.Integer, nullable=True)  # 1-5
+
     # Free-form journal
     notes = db.Column(db.Text, nullable=True)
 
@@ -60,6 +63,7 @@ class DailyLog(BaseModel):
             'pain_locations': json.loads(self.pain_locations) if self.pain_locations else [],
             'pain_level': self.pain_level,
             'pain_notes': self.pain_notes,
+            'partner_rating': self.partner_rating,
             'notes': self.notes,
             'created_at': self.created_at,
             'updated_at': self.updated_at,

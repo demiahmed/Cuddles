@@ -58,6 +58,8 @@ export interface WellnessEntry {
   pain_level: number | null;       // 1-10
   pain_notes: string | null;
 
+  partner_rating: number | null;   // 1-5
+
   notes: string | null;
   created_at?: string;
   updated_at?: string;
