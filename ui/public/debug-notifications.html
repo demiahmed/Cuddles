@@ -500,7 +500,7 @@
 
             const subscriptionId = document.getElementById('subscriptionDropdown').value || null;
             const target = subscriptionId ? `subscription #${subscriptionId}` : 'all subscriptions';
-            log(`📨 Sending custom notification to ${target}…`);
+            log(`📨 Sending: title="${title}" body="${body}" → ${target}`);
             statusEl.textContent = 'Sending…';
             statusEl.style.color = '#aaa';
 
@@ -513,22 +513,29 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),
                 });
-                const result = await response.json();
+
+                const httpStatus = response.status;
+                let result;
+                try { result = await response.json(); }
+                catch(e) { result = { status: 'error', message: `HTTP ${httpStatus} — non-JSON response` }; }
+
+                // Always dump the full server response to the log
+                log(`🔍 Server response (HTTP ${httpStatus}): ${JSON.stringify(result)}`,
+                    (result.status === 'success' || result.status === 'partial') ? 'success' : 'error');
 
                 if (result.status === 'success' || result.status === 'partial') {
-                    log(`✅ Sent to ${result.target}`, 'success');
-                    log(`📋 "${title}" — ${body}`, 'info');
+                    log(`✅ Push sent to ${result.target} — sent:${result.sent} failed:${result.failed}`, 'success');
                     statusEl.textContent = `✅ Sent to ${result.target}`;
                     statusEl.style.color = '#28a745';
                     document.getElementById('customTitle').value = '';
                     document.getElementById('customBody').value = '';
                 } else {
-                    log(`❌ ${result.message}`, 'error');
+                    log(`❌ Backend error: ${result.message}`, 'error');
                     statusEl.textContent = `❌ ${result.message}`;
                     statusEl.style.color = '#dc3545';
                 }
             } catch (error) {
-                log(`❌ Error: ${error.message}`, 'error');
+                log(`❌ Fetch failed (network/CORS?): ${error.message}`, 'error');
                 statusEl.textContent = `❌ ${error.message}`;
                 statusEl.style.color = '#dc3545';
             }
