@@ -108,7 +108,14 @@ def send_custom():
     """
     Send a fully custom push notification.
     Body: { "title": "...", "body": "...", "subscription_id": 1 (optional) }
+    Uses a unique tag so it is never overwritten by scheduled notifications.
     """
+    import json as _json
+    from datetime import datetime as _dt
+    from pywebpush import webpush as _webpush, WebPushException as _WPE
+    from flask import current_app as _app
+    from app.utils.helpers import remove_html_tags
+
     try:
         data = request.get_json(force=True)
         title = (data.get('title') or '').strip()
@@ -118,25 +125,64 @@ def send_custom():
         if not title or not body:
             return jsonify({'status': 'error', 'message': 'title and body are required'}), 400
 
+        # Unique tag so scheduled notifications can never clobber this one
+        tag = f"cuddles-custom-{int(_dt.now().timestamp())}"
+
+        vapid_email = _app.config['VAPID_EMAIL']
+        if not vapid_email.startswith('mailto:'):
+            vapid_email = f'mailto:{vapid_email}'
+
+        payload = _json.dumps({
+            'title': title,
+            'body': remove_html_tags(body),
+            'icon': '/icon-192x192.png',
+            'badge': '/icon-192x192.png',
+            'tag': tag,
+            'requireInteraction': True,
+            'renotify': False,
+            'timestamp': int(_dt.now().timestamp() * 1000),
+        })
+
+        # Resolve target subscriptions
         if subscription_id:
             try:
                 subscription_id = int(subscription_id)
             except (TypeError, ValueError):
                 return jsonify({'status': 'error', 'message': 'subscription_id must be a number'}), 400
-
-            subscription = Subscription.query.get(subscription_id)
-            if not subscription:
+            sub = Subscription.query.get(subscription_id)
+            if not sub:
                 return jsonify({'status': 'error', 'message': f'Subscription {subscription_id} not found'}), 404
-
-            success = NotificationService.send_to_specific_subscription(subscription, title, body)
-            target = f'subscription #{subscription_id}'
+            targets = [sub]
+            target_label = f'subscription #{subscription_id}'
         else:
-            NotificationService.send_push_notification(title, body)
-            success = True
-            target = 'all subscriptions'
+            targets = Subscription.query.all()
+            target_label = f'all {len(targets)} subscription(s)'
 
-        print(f"📨 Custom push sent to {target}: [{title}] {body}")
-        return jsonify({'status': 'success' if success else 'partial', 'target': target}), 200
+        sent, failed = 0, 0
+        for sub in targets:
+            sub_info = sub.subscription_info
+            if isinstance(sub_info, str):
+                sub_info = _json.loads(sub_info)
+            try:
+                _webpush(
+                    subscription_info=sub_info,
+                    data=payload,
+                    vapid_private_key=_app.config['VAPID_PRIVATE_KEY'],
+                    vapid_claims={'sub': vapid_email},
+                    headers={'Urgency': 'high', 'TTL': '86400'},
+                )
+                sent += 1
+            except _WPE as e:
+                failed += 1
+                if e.response and e.response.status_code == 410:
+                    db.session.delete(sub)
+                    db.session.commit()
+            except Exception:
+                failed += 1
+
+        print(f"📨 Custom push to {target_label}: [{title}] {body[:80]} — sent={sent} failed={failed}")
+        status = 'success' if failed == 0 else ('partial' if sent > 0 else 'error')
+        return jsonify({'status': status, 'target': target_label, 'sent': sent, 'failed': failed}), 200
 
     except Exception as e:
         print(f'ERROR send_custom: {e}')
