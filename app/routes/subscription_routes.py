@@ -103,6 +103,46 @@ def cleanup_subscriptions():
         print(f"Error cleaning up subscriptions: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
+@bp.route("/api/send-custom", methods=["POST"])
+def send_custom():
+    """
+    Send a fully custom push notification.
+    Body: { "title": "...", "body": "...", "subscription_id": 1 (optional) }
+    """
+    try:
+        data = request.get_json(force=True)
+        title = (data.get('title') or '').strip()
+        body  = (data.get('body')  or '').strip()
+        subscription_id = data.get('subscription_id')
+
+        if not title or not body:
+            return jsonify({'status': 'error', 'message': 'title and body are required'}), 400
+
+        if subscription_id:
+            try:
+                subscription_id = int(subscription_id)
+            except (TypeError, ValueError):
+                return jsonify({'status': 'error', 'message': 'subscription_id must be a number'}), 400
+
+            subscription = Subscription.query.get(subscription_id)
+            if not subscription:
+                return jsonify({'status': 'error', 'message': f'Subscription {subscription_id} not found'}), 404
+
+            success = NotificationService.send_to_specific_subscription(subscription, title, body)
+            target = f'subscription #{subscription_id}'
+        else:
+            NotificationService.send_push_notification(title, body)
+            success = True
+            target = 'all subscriptions'
+
+        print(f"📨 Custom push sent to {target}: [{title}] {body}")
+        return jsonify({'status': 'success' if success else 'partial', 'target': target}), 200
+
+    except Exception as e:
+        print(f'ERROR send_custom: {e}')
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
 @bp.route("/api/test-push", methods=["GET"])
 def test_push():
     """

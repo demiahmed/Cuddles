@@ -120,6 +120,31 @@
             padding: 20px;
             margin: 20px 0;
         }
+
+        /* Custom message section */
+        .custom-section {
+            background: linear-gradient(135deg, #1a2a1a, #2a3a2a);
+            border: 2px solid #28a745;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .custom-section textarea {
+            width: 100%;
+            padding: 12px;
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 8px;
+            font-size: 14px;
+            resize: vertical;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+        .custom-section textarea:focus { outline: none; border-color: #28a745; }
+        .custom-section input:focus { border-color: #28a745; }
+        button.send-custom { background: #28a745; min-width: 160px; }
+        button.send-custom:hover { background: #1e7e34; }
         
         /* Stats display with proper text wrapping */
         #statsDisplay {
@@ -161,6 +186,30 @@
             </div>
             <div id="targetedTestStatus" class="info-box">
                 <em>Click "📊 Load Subscriptions" to see available devices for testing</em>
+            </div>
+        </div>
+
+        <div class="custom-section">
+            <h3 style="border-color: #28a745;">✍️ Send Custom Notification</h3>
+            <p style="color: #aaa; margin: 0 0 15px 0;">Type any title and message. Uses the selected subscription above, or sends to all if none selected.</p>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <input
+                    type="text"
+                    id="customTitle"
+                    placeholder="Notification title (e.g. Hey babe 💕)"
+                    maxlength="100"
+                    style="width: 100%; box-sizing: border-box;"
+                />
+                <textarea
+                    id="customBody"
+                    placeholder="Your message here…"
+                    rows="3"
+                    maxlength="500"
+                ></textarea>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button class="send-custom" onclick="sendCustomNotification()">📨 Send</button>
+                    <span id="customStatus" style="color: #aaa; font-size: 13px;"></span>
+                </div>
             </div>
         </div>
 
@@ -435,6 +484,53 @@
                 log(`✅ ${result.message}`, 'success');
             } catch (error) {
                 log(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function sendCustomNotification() {
+            const title = document.getElementById('customTitle').value.trim();
+            const body  = document.getElementById('customBody').value.trim();
+            const statusEl = document.getElementById('customStatus');
+
+            if (!title || !body) {
+                statusEl.textContent = '⚠️ Title and message are required.';
+                statusEl.style.color = '#ffc107';
+                return;
+            }
+
+            const subscriptionId = document.getElementById('subscriptionDropdown').value || null;
+            const target = subscriptionId ? `subscription #${subscriptionId}` : 'all subscriptions';
+            log(`📨 Sending custom notification to ${target}…`);
+            statusEl.textContent = 'Sending…';
+            statusEl.style.color = '#aaa';
+
+            try {
+                const payload = { title, body };
+                if (subscriptionId) payload.subscription_id = parseInt(subscriptionId);
+
+                const response = await fetch('/api/send-custom', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                const result = await response.json();
+
+                if (result.status === 'success' || result.status === 'partial') {
+                    log(`✅ Sent to ${result.target}`, 'success');
+                    log(`📋 "${title}" — ${body}`, 'info');
+                    statusEl.textContent = `✅ Sent to ${result.target}`;
+                    statusEl.style.color = '#28a745';
+                    document.getElementById('customTitle').value = '';
+                    document.getElementById('customBody').value = '';
+                } else {
+                    log(`❌ ${result.message}`, 'error');
+                    statusEl.textContent = `❌ ${result.message}`;
+                    statusEl.style.color = '#dc3545';
+                }
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+                statusEl.textContent = `❌ ${error.message}`;
+                statusEl.style.color = '#dc3545';
             }
         }
 
